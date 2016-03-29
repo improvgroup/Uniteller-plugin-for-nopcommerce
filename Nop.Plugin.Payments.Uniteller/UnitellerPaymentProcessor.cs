@@ -146,23 +146,32 @@ namespace Nop.Plugin.Payments.Uniteller
             {
                 data = client.UploadValues(UNITELLER_RESULTS_URL, postData);
             }
-            
-            var ms = new MemoryStream(data);
-            var sr = new StreamReader(ms);
-            var rez = sr.ReadToEnd();
 
-            if (!rez.Contains("?xml"))
-                return new [] { String.Empty, };
-
-            try
+            using (var ms = new MemoryStream(data))
             {
-                var doc = XDocument.Parse(rez);
+                using (var sr = new StreamReader(ms))
+                {
+                    var rez = sr.ReadToEnd();
 
-                return doc.Root.Element("orders").Element("order").Elements("status").Select(p => p.Value.ToUpper()).ToArray();
-            }
-            catch (NullReferenceException)
-            {
-                return new[] { String.Empty, };
+                    if (!rez.Contains("?xml"))
+                        return new[] {String.Empty,};
+
+                    try
+                    {
+                        var doc = XDocument.Parse(rez);
+
+                        return
+                            doc.Root.Element("orders")
+                                .Element("order")
+                                .Elements("status")
+                                .Select(p => p.Value.ToUpper())
+                                .ToArray();
+                    }
+                    catch (NullReferenceException)
+                    {
+                        return new[] {String.Empty,};
+                    }
+                }
             }
         }
 
