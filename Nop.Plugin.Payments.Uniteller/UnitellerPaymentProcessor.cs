@@ -72,7 +72,7 @@ namespace Nop.Plugin.Payments.Uniteller
         /// <returns>Process payment result</returns>
         public ProcessPaymentResult ProcessPayment(ProcessPaymentRequest processPaymentRequest)
         {
-            return new ProcessPaymentResult {NewPaymentStatus = PaymentStatus.Pending};
+            return new ProcessPaymentResult { NewPaymentStatus = PaymentStatus.Pending };
         }
 
         /// <summary>
@@ -105,7 +105,7 @@ namespace Nop.Plugin.Payments.Uniteller
             var hAmount = GetMD5(amount);
             var hCustomerIdp = GetMD5(customerIdp);
             var hPassword = GetMD5(_unitellerPaymentSettings.Password);
-            var empty = GetMD5("");
+            var empty = GetMD5(String.Empty);
 
             const string fSignature = "{0}&{1}&{2}&{5}&{5}&{5}&{3}&{5}&{5}&{5}&{4}";
 
@@ -154,14 +154,13 @@ namespace Nop.Plugin.Payments.Uniteller
                     var rez = sr.ReadToEnd();
 
                     if (!rez.Contains("?xml"))
-                        return new[] {String.Empty,};
+                        return new[] { String.Empty };
 
                     try
                     {
                         var doc = XDocument.Parse(rez);
 
-                        return
-                            doc.Root.Element("orders")
+                        return doc.Root.Element("orders")
                                 .Element("order")
                                 .Elements("status")
                                 .Select(p => p.Value.ToUpper())
@@ -169,7 +168,7 @@ namespace Nop.Plugin.Payments.Uniteller
                     }
                     catch (NullReferenceException)
                     {
-                        return new[] {String.Empty,};
+                        return new[] { String.Empty };
                     }
                 }
             }

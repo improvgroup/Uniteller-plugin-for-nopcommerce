@@ -31,7 +31,6 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
         private readonly ILocalizationService _localizationService;
         private readonly IWebHelper _webHelper;
 
-
         public PaymentUnitellerController(IWorkContext workContext,
             IStoreService storeService, 
             ISettingService settingService, 
@@ -137,7 +136,7 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
         private ContentResult GetResponse(string textToResponse, bool success = false)
         {
             var msg = success ? "SUCCESS" : "FAIL";
-            if(!success)
+            if (!success)
                 _logger.Error(String.Format("Uniteller. {0}", textToResponse));
            
             return Content(String.Format("{0}\r\nnopCommerce. {1}", msg, textToResponse), "text/plain", Encoding.UTF8);
@@ -251,7 +250,7 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
             }
 
             if (order == null)
-                return RedirectToAction("Index", "Home", new {area = ""});
+                return RedirectToAction("Index", "Home", new { area = String.Empty });
 
             //update payment status if need
             if (order.PaymentStatus != PaymentStatus.Paid)
@@ -268,7 +267,7 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
                 }
             }
 
-            return  RedirectToRoute("CheckoutCompleted", new { orderId = order.Id });
+            return RedirectToRoute("CheckoutCompleted", new { orderId = order.Id });
         }
 
         public ActionResult CancelOrder(FormCollection form)
@@ -282,7 +281,7 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
                 order = _orderService.GetOrderByGuid(orderGuid);
             }
 
-            return order==null ? RedirectToAction("Index", "Home", new { area = "" }) : RedirectToRoute("OrderDetails", new {orderId = order.Id});
+            return order == null ? RedirectToAction("Index", "Home", new { area = String.Empty }) : RedirectToRoute("OrderDetails", new { orderId = order.Id });
         }
 
         public override IList<string> ValidatePaymentForm(FormCollection form)
