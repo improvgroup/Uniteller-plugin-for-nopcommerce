@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Text;
 using System.Web.Mvc;
 using Nop.Core;
@@ -82,15 +81,7 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
 
             return View("~/Plugins/Payments.Uniteller/Views/PaymentUniteller/Configure.cshtml", model);
         }
-
-        private void UpdateSetting<TPropType>(int storeScope, bool overrideForStore, UnitellerPaymentSettings settings, Expression<Func<UnitellerPaymentSettings, TPropType>> keySelector)
-        {
-            if (overrideForStore || storeScope == 0)
-                _settingService.SaveSetting(settings, keySelector, storeScope, false);
-            else if (storeScope > 0)
-                _settingService.DeleteSetting(settings, keySelector, storeScope);
-        }
-
+        
         [HttpPost]
         [AdminAuthorize]
         [ChildActionOnly]
@@ -113,11 +104,11 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
             /* We do not clear cache after each setting update.
              * This behavior can increase performance because cached settings will not be cleared 
              * and loaded from database after each update */
-            UpdateSetting(storeScope, model.ShopIdpOverrideForStore, unitellerPaymentSettings, x => x.ShopIdp);
-            UpdateSetting(storeScope, model.LoginOverrideForStore, unitellerPaymentSettings, x => x.Login);
-            UpdateSetting(storeScope, model.PasswordOverrideForStore, unitellerPaymentSettings, x => x.Password);
-            UpdateSetting(storeScope, model.AdditionalFeeOverrideForStore, unitellerPaymentSettings, x => x.AdditionalFee);
-            UpdateSetting(storeScope, model.AdditionalFeePercentageOverrideForStore, unitellerPaymentSettings, x => x.AdditionalFeePercentage);
+            _settingService.SaveSettingOverridablePerStore(unitellerPaymentSettings, x => x.ShopIdp, model.ShopIdpOverrideForStore, storeScope, false);
+            _settingService.SaveSettingOverridablePerStore(unitellerPaymentSettings, x => x.Login, model.LoginOverrideForStore, storeScope, false);
+            _settingService.SaveSettingOverridablePerStore(unitellerPaymentSettings, x => x.Password, model.PasswordOverrideForStore, storeScope, false);
+            _settingService.SaveSettingOverridablePerStore(unitellerPaymentSettings, x => x.AdditionalFee, model.AdditionalFeeOverrideForStore, storeScope, false);
+            _settingService.SaveSettingOverridablePerStore(unitellerPaymentSettings, x => x.AdditionalFeePercentage, model.AdditionalFeePercentageOverrideForStore, storeScope, false);
 
             //now clear settings cache
             _settingService.ClearCache();
@@ -230,8 +221,9 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
             });
             _orderService.UpdateOrder(order);
 
-            //load settings
-            var setting = _settingService.LoadSetting<UnitellerPaymentSettings>();
+            //load settings for a chosen store scope
+            var storeScope = this.GetActiveStoreScopeConfiguration(_storeService, _workContext);
+            var setting = _settingService.LoadSetting<UnitellerPaymentSettings>(storeScope);
 
             var checkDataString = UnitellerPaymentProcessor.GetMD5(orderId + status + setting.Password).ToUpper();
 
