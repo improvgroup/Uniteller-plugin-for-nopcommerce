@@ -7,84 +7,84 @@
 @using (Html.BeginForm())
 {
     @Html.AntiForgeryToken()
-    <table class="adminContent">
-        <tr>
-            <td colspan="2">
-                <b>If you're using this gateway ensure that your primary store currency is supported by Uniteller</b>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <b>For plug-in configuration, you must perform the following actions:</b>
-                <ul>
-                    <li>Sign up on the website uniteller.ru</li>
-                    <li>Sign in to your personal cabinet</li>
-                    <li>Fill out the field «Uniteller Point ID» (Menu item «Sales points»), "Login" and «Password» (Menu item « Authorization parameters »)</li>
-                    <li>Specify the URL-address notification to the store like http://www.yourStore.com/Plugins/Uniteller/ConfirmPay on the edit page of the point of sale</li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <hr/>
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.ShopIdpOverrideForStore, model => model.ShopIdp, Model.ActiveStoreScopeConfiguration)
-                @Html.NopLabelFor(model => model.ShopIdp):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.ShopIdp)
-                @Html.ValidationMessageFor(model => model.ShopIdp)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.LoginOverrideForStore, model => model.Login, Model.ActiveStoreScopeConfiguration)
-                @Html.NopLabelFor(model => model.Login):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.Login)
-                @Html.ValidationMessageFor(model => model.Login)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.PasswordOverrideForStore, model => model.Password, Model.ActiveStoreScopeConfiguration)
-                @Html.NopLabelFor(model => model.Password):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.Password)
-                @Html.ValidationMessageFor(model => model.Password)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.AdditionalFeeOverrideForStore, model => model.AdditionalFee, Model.ActiveStoreScopeConfiguration)
-                @Html.NopLabelFor(model => model.AdditionalFee):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.AdditionalFee)
-                @Html.ValidationMessageFor(model => model.AdditionalFee)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.AdditionalFeePercentageOverrideForStore, model => model.AdditionalFeePercentage, Model.ActiveStoreScopeConfiguration)
-                @Html.NopLabelFor(model => model.AdditionalFeePercentage):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.AdditionalFeePercentage)
-                @Html.ValidationMessageFor(model => model.AdditionalFeePercentage)
-            </td>
-        </tr>
+    <div class="panel-group">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <p>
+                    <b>If you're using this gateway ensure that your primary store currency is supported by Uniteller</b><br />
+                    <b>For plug-in configuration, you must perform the following actions:</b>
+                    <ul>
+                        <li>Sign up on the website uniteller.ru</li>
+                        <li>Sign in to your personal cabinet</li>
+                        <li>Fill out the field «Uniteller Point ID» (Menu item «Sales points»), "Login" and «Password» (Menu item « Authorization parameters »)</li>
+                        <li>Specify the URL-address notification to the store like http://www.yourStore.com/Plugins/Uniteller/ConfirmPay on the edit page of the point of sale</li>
+                    </ul>
+                </p>
 
-        <tr>
-            <td colspan="2">
-                <input type="submit" name="save" class="k-button" value="@T("Admin.Common.Save")" />
-            </td>
-        </tr>
-    </table>
-    
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.OverrideStoreCheckboxFor(model => model.ShopIdpOverrideForStore, model => model.ShopIdp, Model.ActiveStoreScopeConfiguration)
+                        @Html.NopLabelFor(model => model.ShopIdp)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.ShopIdp)
+                        @Html.ValidationMessageFor(model => model.ShopIdp)
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.OverrideStoreCheckboxFor(model => model.LoginOverrideForStore, model => model.Login, Model.ActiveStoreScopeConfiguration)
+                        @Html.NopLabelFor(model => model.Login)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.Login)
+                        @Html.ValidationMessageFor(model => model.Login)
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.OverrideStoreCheckboxFor(model => model.PasswordOverrideForStore, model => model.Password, Model.ActiveStoreScopeConfiguration)
+                        @Html.NopLabelFor(model => model.Password)
+                    </div>
+                    <div class="col-md-9">
+                       @Html.NopEditorFor(model => model.Password)
+                    @Html.ValidationMessageFor(model => model.Password)
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.OverrideStoreCheckboxFor(model => model.AdditionalFeeOverrideForStore, model => model.AdditionalFee, Model.ActiveStoreScopeConfiguration)
+                        @Html.NopLabelFor(model => model.AdditionalFee)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.AdditionalFee)
+                        @Html.ValidationMessageFor(model => model.AdditionalFee)
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.OverrideStoreCheckboxFor(model => model.AdditionalFeePercentageOverrideForStore, model => model.AdditionalFeePercentage, Model.ActiveStoreScopeConfiguration)
+                        @Html.NopLabelFor(model => model.AdditionalFeePercentage)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.AdditionalFeePercentage)
+                        @Html.ValidationMessageFor(model => model.AdditionalFeePercentage)
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-md-3">
+                        &nbsp;
+                    </div>
+                    <div class="col-md-9">
+                        <input type="submit" name="save" class="btn bg-blue" value="@T("Admin.Common.Save")" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 }
