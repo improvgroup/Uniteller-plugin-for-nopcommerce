@@ -129,7 +129,7 @@ namespace Nop.Plugin.Payments.Uniteller
         /// </summary>
         /// <param name="orderId">Order ID</param>
         /// <returns></returns>
-        public string[] GetPaimentStatus(string orderId)
+        public string[] GetPaymentStatus(string orderId)
         {
             //create and send post data
             var postData = new NameValueCollection();

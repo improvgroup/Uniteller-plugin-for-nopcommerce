@@ -259,7 +259,7 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
                 if (processor == null || !processor.IsPaymentMethodActive(_paymentSettings) || !processor.PluginDescriptor.Installed)
                     throw new NopException("Uniteller module cannot be loaded");
 
-                var statuses = processor.GetPaimentStatus(orderId);
+                var statuses = processor.GetPaymentStatus(orderId);
 
                 foreach (var status in statuses)
                 {
