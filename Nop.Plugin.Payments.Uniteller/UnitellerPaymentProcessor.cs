@@ -36,7 +36,8 @@ namespace Nop.Plugin.Payments.Uniteller
         private readonly ICurrencyService _currencyService;
         private readonly CurrencySettings _currencySettings;
         private readonly IOrderTotalCalculationService _orderTotalCalculationService;
-        private readonly IStoreContext _storeContext;
+        private readonly ILocalizationService _localizationService;
+        private readonly IWebHelper _webHelper;
 
         private const string UNITELLER_URL = "https://wpay.uniteller.ru/pay/";
         private const string UNITELLER_RESULTS_URL = "https://wpay.uniteller.ru/results/";
@@ -51,14 +52,17 @@ namespace Nop.Plugin.Payments.Uniteller
             ISettingService settingService,
             ICurrencyService currencyService,
             CurrencySettings currencySettings,
-            IOrderTotalCalculationService orderTotalCalculationService, IStoreContext storeContext)
+            IOrderTotalCalculationService orderTotalCalculationService,
+            ILocalizationService localizationService,
+            IWebHelper webHelper)
         {
             this._unitellerPaymentSettings = unitellerPaymentSettings;
             this._settingService = settingService;
             this._currencyService = currencyService;
             this._currencySettings = currencySettings;
             this._orderTotalCalculationService = orderTotalCalculationService;
-            this._storeContext = storeContext;
+            this._localizationService = localizationService;
+            this._webHelper = webHelper;
         }
 
         #endregion
@@ -114,9 +118,9 @@ namespace Nop.Plugin.Payments.Uniteller
 
             post.Add("Signature", signature);
             //uniteller considers localhost wrong address
-            var siteUrl = _storeContext.CurrentStore.Url.TrimEnd('/').Replace("localhost", "127.0.0.1");
-            var failUrl = String.Format("{0}/{1}", siteUrl, "Plugins/Uniteller/CancelOrder");
-            var successUrl = String.Format("{0}/{1}", siteUrl, "Plugins/Uniteller/Success");
+            var siteUrl = _webHelper.GetStoreLocation().Replace("localhost", "127.0.0.1");
+            var failUrl = String.Format("{0}{1}", siteUrl, "Plugins/Uniteller/CancelOrder");
+            var successUrl = String.Format("{0}{1}", siteUrl, "Plugins/Uniteller/Success");
 
             post.Add("URL_RETURN_NO", failUrl);
             post.Add("URL_RETURN_OK", successUrl);
@@ -132,14 +136,16 @@ namespace Nop.Plugin.Payments.Uniteller
         public string[] GetPaymentStatus(string orderId)
         {
             //create and send post data
-            var postData = new NameValueCollection();
-           
-            postData.Add("Shop_ID", _unitellerPaymentSettings.ShopIdp);
-            postData.Add("Login", _unitellerPaymentSettings.Login);
-            postData.Add("Password", _unitellerPaymentSettings.Password);
-            postData.Add("Format", RETURN_FORMAT);
-            postData.Add("ShopOrderNumber", orderId);
-            postData.Add("S_FIELDS", "Status");
+            var postData = new NameValueCollection
+            {
+                {"Shop_ID", _unitellerPaymentSettings.ShopIdp},
+                {"Login", _unitellerPaymentSettings.Login},
+                {"Password", _unitellerPaymentSettings.Password},
+                {"Format", RETURN_FORMAT},
+                {"ShopOrderNumber", orderId},
+                {"S_FIELDS", "Status"}
+            };
+
 
             byte[] data;
             using (var client = new WebClient())
@@ -289,6 +295,7 @@ namespace Nop.Plugin.Payments.Uniteller
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Uniteller.Fields.AdditionalFeePercentage", "Additional fee. Use percentage");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Uniteller.Fields.AdditionalFeePercentage.Hint", "Determines whether to apply a percentage additional fee to the order total. If not enabled, a fixed value is used.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Uniteller.Fields.RedirectionTip", "For payment you will be redirected to the website uniteller.ru.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Uniteller.Fields.PaymentMethodDescription", "For payment you will be redirected to the website uniteller.ru.");
 
             base.Install();
         }
@@ -313,6 +320,7 @@ namespace Nop.Plugin.Payments.Uniteller
             this.DeletePluginLocaleResource("Plugins.Payments.Uniteller.Fields.AdditionalFeePercentage");
             this.DeletePluginLocaleResource("Plugins.Payments.Uniteller.Fields.AdditionalFeePercentage.Hint");
             this.DeletePluginLocaleResource("Plugins.Payments.Uniteller.Fields.RedirectionTip");
+            this.DeletePluginLocaleResource("Plugins.Payments.Uniteller.Fields.PaymentMethodDescription");
 
             base.Uninstall();
         }
@@ -435,6 +443,14 @@ namespace Nop.Plugin.Payments.Uniteller
         public bool SkipPaymentInfo
         {
             get { return false; }
+        }
+
+        /// <summary>
+        /// Gets a payment method description that will be displayed on checkout pages in the public store
+        /// </summary>
+        public string PaymentMethodDescription
+        {
+            get { return _localizationService.GetResource("Plugins.Payments.Uniteller.Fields.PaymentMethodDescription"); }
         }
 
         #endregion

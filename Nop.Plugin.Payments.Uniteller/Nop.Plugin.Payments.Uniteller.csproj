@@ -71,12 +71,12 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Views\PaymentUniteller\Configure.cshtml">
+    <Content Include="Views\Configure.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Views\PaymentUniteller\PaymentInfo.cshtml">
+    <Content Include="Views\PaymentInfo.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

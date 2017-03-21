@@ -79,7 +79,7 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
                 model.AdditionalFeePercentageOverrideForStore = _settingService.SettingExists(unitellerPaymentSettings, x => x.AdditionalFeePercentage, storeScope);
             }
 
-            return View("~/Plugins/Payments.Uniteller/Views/PaymentUniteller/Configure.cshtml", model);
+            return View("~/Plugins/Payments.Uniteller/Views/Configure.cshtml", model);
         }
         
         [HttpPost]
@@ -121,7 +121,7 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
         [ChildActionOnly]
         public ActionResult PaymentInfo()
         {
-            return View("~/Plugins/Payments.Uniteller/Views/PaymentUniteller/PaymentInfo.cshtml");
+            return View("~/Plugins/Payments.Uniteller/Views/PaymentInfo.cshtml");
         }
         
         private ContentResult GetResponse(string textToResponse, bool success = false)
