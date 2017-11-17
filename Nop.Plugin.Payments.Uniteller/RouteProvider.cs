@@ -1,32 +1,27 @@
-﻿using System.Web.Mvc;
-using System.Web.Routing;
-using Nop.Web.Framework.Mvc.Routes;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
+using Nop.Web.Framework.Mvc.Routing;
 
 namespace Nop.Plugin.Payments.Uniteller
 {
     public partial class RouteProvider : IRouteProvider
     {
-        public void RegisterRoutes(RouteCollection routes)
+        public void RegisterRoutes(IRouteBuilder routeBuilder)
         {
             //confirm pay
-            routes.MapRoute("Plugin.Payments.Uniteller.ConfirmPay",
+            routeBuilder.MapRoute("Plugin.Payments.Uniteller.ConfirmPay",
                  "Plugins/Uniteller/ConfirmPay",
-                 new { controller = "PaymentUniteller", action = "ConfirmPay" },
-                 new[] { "Nop.Plugin.Payments.Uniteller.Controllers" }
-            );
+                 new { controller = "PaymentUniteller", action = "ConfirmPay" });
             //cancel
-            routes.MapRoute("Plugin.Payments.Uniteller.CancelOrder",
+            routeBuilder.MapRoute("Plugin.Payments.Uniteller.CancelOrder",
                  "Plugins/Uniteller/CancelOrder",
-                 new { controller = "PaymentUniteller", action = "CancelOrder" },
-                 new[] { "Nop.Plugin.Payments.Uniteller.Controllers" }
-            );
+                 new { controller = "PaymentUniteller", action = "CancelOrder" });
             //success
-            routes.MapRoute("Plugin.Payments.Uniteller.Success",
+            routeBuilder.MapRoute("Plugin.Payments.Uniteller.Success",
                  "Plugins/Uniteller/Success",
-                 new { controller = "PaymentUniteller", action = "Success" },
-                 new[] { "Nop.Plugin.Payments.Uniteller.Controllers" }
-            );
+                 new { controller = "PaymentUniteller", action = "Success" });
         }
+
         public int Priority
         {
             get

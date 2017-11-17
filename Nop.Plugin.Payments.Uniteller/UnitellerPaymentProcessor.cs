@@ -7,8 +7,8 @@ using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
-using System.Web.Routing;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Http;
 using Nop.Core;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Orders;
@@ -88,7 +88,7 @@ namespace Nop.Plugin.Payments.Uniteller
             var customerId = postProcessPaymentRequest.Order.CustomerId;
             var orderGuid = postProcessPaymentRequest.Order.OrderGuid;
             var orderTotal = postProcessPaymentRequest.Order.OrderTotal;
-            var amount = String.Format(CultureInfo.InvariantCulture, "{0:0.00}", orderTotal);
+            var amount = string.Format(CultureInfo.InvariantCulture, "{0:0.00}", orderTotal);
             var orderId = orderGuid.ToString();
             var customerIdp = customerId.ToString();
 
@@ -109,18 +109,18 @@ namespace Nop.Plugin.Payments.Uniteller
             var hAmount = GetMD5(amount);
             var hCustomerIdp = GetMD5(customerIdp);
             var hPassword = GetMD5(_unitellerPaymentSettings.Password);
-            var empty = GetMD5(String.Empty);
+            var empty = GetMD5(string.Empty);
 
             const string fSignature = "{0}&{1}&{2}&{5}&{5}&{5}&{3}&{5}&{5}&{5}&{4}";
 
             //code to identify the sender and check integrity of files
-            var signature = GetMD5(String.Format(fSignature, hShopIdp, hOrderIdp, hAmount, hCustomerIdp, hPassword, empty)).ToUpper();
+            var signature = GetMD5(string.Format(fSignature, hShopIdp, hOrderIdp, hAmount, hCustomerIdp, hPassword, empty)).ToUpper();
 
             post.Add("Signature", signature);
             //uniteller considers localhost wrong address
             var siteUrl = _webHelper.GetStoreLocation().Replace("localhost", "127.0.0.1");
-            var failUrl = String.Format("{0}{1}", siteUrl, "Plugins/Uniteller/CancelOrder");
-            var successUrl = String.Format("{0}{1}", siteUrl, "Plugins/Uniteller/Success");
+            var failUrl = $"{siteUrl}Plugins/Uniteller/CancelOrder";
+            var successUrl = $"{siteUrl}Plugins/Uniteller/Success";
 
             post.Add("URL_RETURN_NO", failUrl);
             post.Add("URL_RETURN_OK", successUrl);
@@ -160,22 +160,14 @@ namespace Nop.Plugin.Payments.Uniteller
                     var rez = sr.ReadToEnd();
 
                     if (!rez.Contains("?xml"))
-                        return new[] { String.Empty };
+                        return new[] {string.Empty};
 
-                    try
-                    {
-                        var doc = XDocument.Parse(rez);
 
-                        return doc.Root.Element("orders")
-                                .Element("order")
-                                .Elements("status")
-                                .Select(p => p.Value.ToUpper())
-                                .ToArray();
-                    }
-                    catch (NullReferenceException)
-                    {
-                        return new[] { String.Empty };
-                    }
+                    var doc = XDocument.Parse(rez);
+
+                    return doc.Root?.Element("orders")?.Element("order")?.Elements("status")
+                               .Select(p => p.Value.ToUpper())
+                               .ToArray() ?? new[] {string.Empty};
                 }
             }
         }
@@ -239,30 +231,24 @@ namespace Nop.Plugin.Payments.Uniteller
             return !((DateTime.UtcNow - order.CreatedOnUtc).TotalSeconds < 5);
         }
 
-        /// <summary>
-        /// Gets a route for provider configuration
-        /// </summary>
-        /// <param name="actionName">Action name</param>
-        /// <param name="controllerName">Controller name</param>
-        /// <param name="routeValues">Route values</param>
-        public void GetConfigurationRoute(out string actionName, out string controllerName, out RouteValueDictionary routeValues)
+        public override string GetConfigurationPageUrl()
         {
-            actionName = "Configure";
-            controllerName = "PaymentUniteller";
-            routeValues = new RouteValueDictionary { { "Namespaces", "Nop.Plugin.Payments.Uniteller.Controllers" }, { "area", null } };
+            return $"{_webHelper.GetStoreLocation()}Admin/PaymentUniteller/Configure";
         }
 
-        /// <summary>
-        /// Gets a route for payment info
-        /// </summary>
-        /// <param name="actionName">Action name</param>
-        /// <param name="controllerName">Controller name</param>
-        /// <param name="routeValues">Route values</param>
-        public void GetPaymentInfoRoute(out string actionName, out string controllerName, out RouteValueDictionary routeValues)
+        public IList<string> ValidatePaymentForm(IFormCollection form)
         {
-            actionName = "PaymentInfo";
-            controllerName = "PaymentUniteller";
-            routeValues = new RouteValueDictionary { { "Namespaces", "Nop.Plugin.Payments.Uniteller.Controllers" }, { "area", null } };
+            return new List<string>();
+        }
+
+        public ProcessPaymentRequest GetPaymentInfo(IFormCollection form)
+        {
+            return new ProcessPaymentRequest();
+        }
+
+        public void GetPublicViewComponent(out string viewComponentName)
+        {
+            viewComponentName = "PaymentUniteller";
         }
 
         /// <summary>

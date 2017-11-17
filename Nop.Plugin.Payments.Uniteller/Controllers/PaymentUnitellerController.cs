@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
@@ -12,8 +11,11 @@ using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
+using Nop.Services.Security;
 using Nop.Services.Stores;
+using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
+using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Plugin.Payments.Uniteller.Controllers
 {
@@ -29,6 +31,7 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
         private readonly PaymentSettings _paymentSettings;
         private readonly ILocalizationService _localizationService;
         private readonly IWebHelper _webHelper;
+        private readonly IPermissionService _permissionService;
 
         public PaymentUnitellerController(IWorkContext workContext,
             IStoreService storeService, 
@@ -38,7 +41,9 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
             IOrderProcessingService orderProcessingService, 
             ILogger logger,
             PaymentSettings paymentSettings, 
-            ILocalizationService localizationService, IWebHelper webHelper)
+            ILocalizationService localizationService, 
+            IWebHelper webHelper,
+            IPermissionService permissionService)
         {
             this._workContext = workContext;
             this._storeService = storeService;
@@ -50,12 +55,16 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
             this._paymentSettings = paymentSettings;
             this._localizationService = localizationService;
             this._webHelper = webHelper;
+            this._permissionService = permissionService;
         }
 
-        [AdminAuthorize]
-        [ChildActionOnly]
-        public ActionResult Configure()
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public IActionResult Configure()
         {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePaymentMethods))
+                return AccessDeniedView();
+
             //load settings for a chosen store scope
             var storeScope = this.GetActiveStoreScopeConfiguration(_storeService, _workContext);
             var unitellerPaymentSettings = _settingService.LoadSetting<UnitellerPaymentSettings>(storeScope);
@@ -83,10 +92,13 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
         }
         
         [HttpPost]
-        [AdminAuthorize]
-        [ChildActionOnly]
-        public ActionResult Configure(ConfigurationModel model)
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public IActionResult Configure(ConfigurationModel model)
         {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePaymentMethods))
+                return AccessDeniedView();
+
             if (!ModelState.IsValid)
                 return Configure();
 
@@ -117,28 +129,22 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
 
             return Configure();
         }
-
-        [ChildActionOnly]
-        public ActionResult PaymentInfo()
-        {
-            return View("~/Plugins/Payments.Uniteller/Views/PaymentInfo.cshtml");
-        }
         
         private ContentResult GetResponse(string textToResponse, bool success = false)
         {
             var msg = success ? "SUCCESS" : "FAIL";
             if (!success)
-                _logger.Error(String.Format("Uniteller. {0}", textToResponse));
+                _logger.Error($"Uniteller. {textToResponse}");
            
-            return Content(String.Format("{0}\r\nnopCommerce. {1}", msg, textToResponse), "text/plain", Encoding.UTF8);
+            return Content($"{msg}\r\nnopCommerce. {textToResponse}", "text/plain", Encoding.UTF8);
         }
 
-        private string GetValue(string key, FormCollection form)
+        private string GetValue(string key, IFormCollection form)
         {
-            return (form.AllKeys.Contains(key) ? form[key] : _webHelper.QueryString<string>(key)) ?? String.Empty;
+            return (form.Keys.Contains(key) ? form[key].ToString() : _webHelper.QueryString<string>(key)) ?? string.Empty;
         }
 
-        private ActionResult UpdateOrderStatus(Order order, string status)
+        private IActionResult UpdateOrderStatus(Order order, string status)
         {
             status = status.ToUpper();
             var textToResponse = "Your order has been paid";
@@ -179,8 +185,9 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
             return GetResponse(textToResponse, true);
         }
 
-        public ActionResult ConfirmPay(FormCollection form)
+        public IActionResult ConfirmPay()
         {
+            var form = Request.Form;
             var processor =
                _paymentService.LoadPaymentMethodBySystemName("Payments.Uniteller") as UnitellerPaymentProcessor;
             if (processor == null ||
@@ -197,8 +204,7 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
 
             Order order = null;
 
-            Guid orderGuid;
-            if (Guid.TryParse(orderId, out orderGuid))
+            if (Guid.TryParse(orderId, out Guid orderGuid))
             {
                 order = _orderService.GetOrderByGuid(orderGuid);
             }
@@ -230,19 +236,18 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
             return checkDataString != signature ? GetResponse("Invalid order data") : UpdateOrderStatus(order, status);
         }
 
-        public ActionResult Success(FormCollection form)
+        public IActionResult Success()
         {
             var orderId = _webHelper.QueryString<string>("Order_ID");
             Order order = null;
 
-            Guid orderGuid;
-            if (Guid.TryParse(orderId, out orderGuid))
+            if (Guid.TryParse(orderId, out Guid orderGuid))
             {
                 order = _orderService.GetOrderByGuid(orderGuid);
             }
 
             if (order == null)
-                return RedirectToAction("Index", "Home", new { area = String.Empty });
+                return RedirectToAction("Index", "Home", new { area = string.Empty });
 
             //update payment status if need
             if (order.PaymentStatus != PaymentStatus.Paid)
@@ -262,28 +267,22 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
             return RedirectToRoute("CheckoutCompleted", new { orderId = order.Id });
         }
 
-        public ActionResult CancelOrder(FormCollection form)
+        public IActionResult CancelOrder()
         {
             var orderId = _webHelper.QueryString<string>("Order_ID");
             Order order = null;
 
-            Guid orderGuid;
-            if (Guid.TryParse(orderId, out orderGuid))
+            if (Guid.TryParse(orderId, out Guid orderGuid))
             {
                 order = _orderService.GetOrderByGuid(orderGuid);
             }
 
-            return order == null ? RedirectToAction("Index", "Home", new { area = String.Empty }) : RedirectToRoute("OrderDetails", new { orderId = order.Id });
+            if (order == null)
+                return RedirectToAction("Index", "Home", new {area = string.Empty});
+
+            return RedirectToRoute("OrderDetails", new { orderId = order.Id });
         }
 
-        public override IList<string> ValidatePaymentForm(FormCollection form)
-        {
-            return new List<string>();
-        }
-
-        public override ProcessPaymentRequest GetPaymentInfo(FormCollection form)
-        {
-            return new ProcessPaymentRequest();
-        }
+       
     }
 }

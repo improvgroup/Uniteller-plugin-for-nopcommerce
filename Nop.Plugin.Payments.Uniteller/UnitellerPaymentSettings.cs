@@ -29,5 +29,4 @@ namespace Nop.Plugin.Payments.Uniteller
         /// </summary>
         public decimal AdditionalFee { get; set; }
     }
-
 }
