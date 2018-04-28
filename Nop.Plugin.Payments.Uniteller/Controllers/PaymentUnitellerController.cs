@@ -185,9 +185,9 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
             return GetResponse(textToResponse, true);
         }
 
-        public IActionResult ConfirmPay()
+        public IActionResult ConfirmPay(IpnModel model)
         {
-            var form = Request.Form;
+            var form = model.Form;
             var processor =
                _paymentService.LoadPaymentMethodBySystemName("Payments.Uniteller") as UnitellerPaymentProcessor;
             if (processor == null ||
