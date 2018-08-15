@@ -12,7 +12,6 @@ using Nop.Services.Logging;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Services.Security;
-using Nop.Services.Stores;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
@@ -21,41 +20,35 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
 {
     public class PaymentUnitellerController : BasePaymentController
     {
-        private readonly IWorkContext _workContext;
-        private readonly IStoreService _storeService;
-        private readonly ISettingService _settingService;
-        private readonly IPaymentService _paymentService;
-        private readonly IOrderService _orderService;
-        private readonly IOrderProcessingService _orderProcessingService;
-        private readonly ILogger _logger;
-        private readonly PaymentSettings _paymentSettings;
         private readonly ILocalizationService _localizationService;
-        private readonly IWebHelper _webHelper;
+        private readonly ILogger _logger;
+        private readonly IOrderProcessingService _orderProcessingService;
+        private readonly IOrderService _orderService;
+        private readonly IPaymentService _paymentService;
         private readonly IPermissionService _permissionService;
+        private readonly ISettingService _settingService;
+        private readonly IStoreContext _storeContext;
+        private readonly IWebHelper _webHelper;
 
-        public PaymentUnitellerController(IWorkContext workContext,
-            IStoreService storeService, 
-            ISettingService settingService, 
-            IPaymentService paymentService, 
-            IOrderService orderService, 
-            IOrderProcessingService orderProcessingService, 
+        public PaymentUnitellerController(ILocalizationService localizationService,
             ILogger logger,
-            PaymentSettings paymentSettings, 
-            ILocalizationService localizationService, 
-            IWebHelper webHelper,
-            IPermissionService permissionService)
+            IOrderProcessingService orderProcessingService,
+            IOrderService orderService,
+            IPaymentService paymentService,
+            IPermissionService permissionService,
+            ISettingService settingService,
+            IStoreContext storeContext,
+            IWebHelper webHelper)
         {
-            this._workContext = workContext;
-            this._storeService = storeService;
-            this._settingService = settingService;
-            this._paymentService = paymentService;
-            this._orderService = orderService;
-            this._orderProcessingService = orderProcessingService;
-            this._logger = logger;
-            this._paymentSettings = paymentSettings;
             this._localizationService = localizationService;
-            this._webHelper = webHelper;
+            this._logger = logger;
+            this._orderProcessingService = orderProcessingService;
+            this._orderService = orderService;
+            this._paymentService = paymentService;
             this._permissionService = permissionService;
+            this._settingService = settingService;
+            this._storeContext = storeContext;
+            this._webHelper = webHelper;
         }
 
         [AuthorizeAdmin]
@@ -66,7 +59,7 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
                 return AccessDeniedView();
 
             //load settings for a chosen store scope
-            var storeScope = this.GetActiveStoreScopeConfiguration(_storeService, _workContext);
+            var storeScope = _storeContext.ActiveStoreScopeConfiguration;
             var unitellerPaymentSettings = _settingService.LoadSetting<UnitellerPaymentSettings>(storeScope);
 
             var model = new ConfigurationModel
@@ -103,7 +96,7 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
                 return Configure();
 
             //load settings for a chosen store scope
-            var storeScope = this.GetActiveStoreScopeConfiguration(_storeService, _workContext);
+            var storeScope = _storeContext.ActiveStoreScopeConfiguration;
             var unitellerPaymentSettings = _settingService.LoadSetting<UnitellerPaymentSettings>(storeScope);
 
             //save settings
@@ -191,7 +184,7 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
             var processor =
                _paymentService.LoadPaymentMethodBySystemName("Payments.Uniteller") as UnitellerPaymentProcessor;
             if (processor == null ||
-                !processor.IsPaymentMethodActive(_paymentSettings) || !processor.PluginDescriptor.Installed)
+                !_paymentService.IsPaymentMethodActive(processor) || !processor.PluginDescriptor.Installed)
                 throw new NopException("Uniteller module cannot be loaded");
 
             const string orderIdKey = "Order_ID";
@@ -228,7 +221,7 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
             _orderService.UpdateOrder(order);
 
             //load settings for a chosen store scope
-            var storeScope = this.GetActiveStoreScopeConfiguration(_storeService, _workContext);
+            var storeScope = _storeContext.ActiveStoreScopeConfiguration;
             var setting = _settingService.LoadSetting<UnitellerPaymentSettings>(storeScope);
 
             var checkDataString = UnitellerPaymentProcessor.GetMD5(orderId + status + setting.Password).ToUpper();
@@ -253,7 +246,7 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
             if (order.PaymentStatus != PaymentStatus.Paid)
             {
                 var processor = _paymentService.LoadPaymentMethodBySystemName("Payments.Uniteller") as UnitellerPaymentProcessor;
-                if (processor == null || !processor.IsPaymentMethodActive(_paymentSettings) || !processor.PluginDescriptor.Installed)
+                if (processor == null || !_paymentService.IsPaymentMethodActive(processor) || !processor.PluginDescriptor.Installed)
                     throw new NopException("Uniteller module cannot be loaded");
 
                 var statuses = processor.GetPaymentStatus(orderId);
@@ -282,7 +275,5 @@ namespace Nop.Plugin.Payments.Uniteller.Controllers
 
             return RedirectToRoute("OrderDetails", new { orderId = order.Id });
         }
-
-       
     }
 }
